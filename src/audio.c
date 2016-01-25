@@ -32,50 +32,50 @@ static double volume = 1.0;
 
 void set_volume(double new_volume)
 {
-    volume = new_volume;
+	volume = new_volume;
 }
 
 audio_fifo_data_t* audio_get(audio_fifo_t *af, snd_pcm_t **h)
 {
-    audio_fifo_data_t *afd;
-    int i;
-    pthread_mutex_lock(&af->mutex);
+	audio_fifo_data_t *afd;
+	int i;
+	pthread_mutex_lock(&af->mutex);
 
-    while(!(afd = TAILQ_FIRST(&af->q))) {
+	while(!(afd = TAILQ_FIRST(&af->q))) {
 		if(*h != NULL) {
 			snd_pcm_close(*h);
 			*h = NULL;
 		}
 		pthread_cond_wait(&af->cond, &af->mutex);
-    }
-
-    TAILQ_REMOVE(&af->q, afd, link);
-    af->qlen -= afd->nsamples;
-  
-    pthread_mutex_unlock(&af->mutex);
-
-    if(volume != 1.0) {
-	int nsamples = afd->nsamples * afd->channels;
-	for(i = 0; i < nsamples; i++) {
-	    afd->samples[i] = afd->samples[i] * volume;
 	}
-    }
 
-    return afd;
+	TAILQ_REMOVE(&af->q, afd, link);
+	af->qlen -= afd->nsamples;
+
+	pthread_mutex_unlock(&af->mutex);
+
+	if(volume != 1.0) {
+		int nsamples = afd->nsamples * afd->channels;
+		for(i = 0; i < nsamples; i++) {
+			afd->samples[i] = afd->samples[i] * volume;
+		}
+	}
+
+	return afd;
 }
 
 void audio_fifo_flush(audio_fifo_t *af)
 {
-    audio_fifo_data_t *afd;
+	audio_fifo_data_t *afd;
 
 
-    pthread_mutex_lock(&af->mutex);
+	pthread_mutex_lock(&af->mutex);
 
-    while((afd = TAILQ_FIRST(&af->q))) {
-	TAILQ_REMOVE(&af->q, afd, link);
-	free(afd);
-    }
+	while((afd = TAILQ_FIRST(&af->q))) {
+		TAILQ_REMOVE(&af->q, afd, link);
+		free(afd);
+	}
 
-    af->qlen = 0;
-    pthread_mutex_unlock(&af->mutex);
+	af->qlen = 0;
+	pthread_mutex_unlock(&af->mutex);
 }
