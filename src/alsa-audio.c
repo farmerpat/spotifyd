@@ -188,6 +188,7 @@ static void* alsa_audio_start(void *aux)
 		afd = audio_get(af, &h);
 
 		if (!h || cur_rate != afd->rate || cur_channels != afd->channels) {
+			// look around here
 			if (h) snd_pcm_close(h);
 
 			cur_rate = afd->rate;
